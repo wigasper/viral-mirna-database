@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import pandas as pd
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 
@@ -62,39 +63,21 @@ for ID in tqdm(uniprot_ids):
     except AttributeError:
         errors.append(ID)
 
+# Save
+prot_data = pd.DataFrame(prot_data, columns=['UniProtID', 'Symbol', 'FullName', 'GOIDs', 'Tissues'])
+prot_data.to_csv("proteins.csv")
 
+# FNFEs belong to IDs that generated unresolvable errors on the pull
+# due to being obsolete. Recording for future reference
+with open("fnfes_from_uniprot_mining.csv", "w") as f:
+    for e in fnfe:
+        f.write(e)
+        f.write("\n")
 
-
-
-
-
-
-
-
-
-with open("./UniProt XMLs/B3KRH5.xml", "r") as handle:
-            prot = ["B3KRH5"]
-            soup = BeautifulSoup(handle.read())
-            # Get symbol
-            if soup.gene is not None:
-                for name in soup.gene.find_all("name"):
-                    if name['type'] == "primary":
-                        prot.append(name.text)
-            else:
-                prot.append()
-            # Get full name
-            prot.append(soup.find("fullname").text)
-            # Get GO IDs
-            go_ids = []
-            for ref in soup.find_all("dbreference"):
-                if ref['type']== "GO":
-                    go_ids.append(ref['id'])
-            prot.append(go_ids)
-            # Get tissue specificity if available:
-            tissues = []
-            for tissue in soup.find_all("tissue"):
-                tissues.append(tissue.text)
-            prot.append(tissues)
-            
-            # Add to prot_data list
-            prot_data.append(prot)
+# After examination, the IDs that raised AttributeErrors are
+# deprecated, deleted, or otherwise obsolete. Recording these for
+# future reference
+with open("obsolete_or_deleted_UniProtIDs.csv", "w") as f:
+    for e in errors:
+        f.write(e)
+        f.write("\n")
