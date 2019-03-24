@@ -27,31 +27,38 @@ fnfe = []
 errors = []
 
 # prot_data list order:
-# [UniProt ID, Symbol, Full Name, GO IDs, Tissues]
+# [UniProt ID, Symbol, Full Name, GeneID, GO IDs, Tissues]
 prot_data = []
 
 for ID in tqdm(uniprot_ids):
     try:
         with open("./UniProt XMLs/{}.xml".format(ID), "r") as handle:
             prot = [ID]
+            symbol = "-"
+            full_name = "-"
+            gene_id = "-"
+            go_ids = []
+            tissues = []
+            
             soup = BeautifulSoup(handle.read())
             # Get symbol
             if soup.gene is not None:
                 for name in soup.gene.find_all("name"):
                     if name['type'] == "primary":
-                        prot.append(name.text)
-            else:
-                prot.append("NA")
+                        symbol = name.text
+            prot.append(symbol)
             # Get full name
-            prot.append(soup.find("fullname").text)
-            # Get GO IDs
-            go_ids = []
+            full_name = soup.find("fullname").text
+            prot.append(full_name)
+            # Get GO IDs and GeneID
             for ref in soup.find_all("dbreference"):
-                if ref['type']== "GO":
+                if ref['type'] == "GO":
                     go_ids.append(ref['id'])
+                if ref['type'] == "GeneID":
+                    gene_id = ref['id']
+            prot.append(gene_id)
             prot.append(go_ids)
             # Get tissue specificity if available:
-            tissues = []
             for tissue in soup.find_all("tissue"):
                 tissues.append(tissue.text)
             prot.append(tissues)
@@ -63,9 +70,26 @@ for ID in tqdm(uniprot_ids):
     except AttributeError:
         errors.append(ID)
 
-# Save
-prot_data = pd.DataFrame(prot_data, columns=['UniProtID', 'Symbol', 'FullName', 'GOIDs', 'Tissues'])
-prot_data.to_csv("proteins.csv")
+# Save as tab delim
+with open("proteins.tab", "w") as out:
+    for prot in prot_data:
+        out.write(prot[0])
+        out.write("\t")
+        out.write(prot[1])
+        out.write("\t")
+        out.write(prot[2])
+        out.write("\t")
+        out.write(prot[3])
+        out.write("\t")
+        out.write(", ".join(prot[4]))
+        out.write("\t")
+        out.write(", ".join(prot[5]))
+        out.write("\n")
+
+# Save as CSV
+prot_df = pd.DataFrame(prot_data, columns=['UniProtID', 'Symbol', 'FullName', 
+                                           'GeneID', 'GOIDs', 'Tissues'])
+prot_df.to_csv("proteins.csv")
 
 # FNFEs belong to IDs that generated unresolvable errors on the pull
 # due to being obsolete. Recording for future reference
