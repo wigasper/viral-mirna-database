@@ -28,7 +28,7 @@ with open("./data/go.obo", "r") as go:
 go_terms.append(term)
 
 # Write as a tab-delimited file for insertion into the DB
-with open("go.tab", "w") as out:
+with open("./data/go.tab", "w") as out:
     for term in go_terms:
         out.write(term[0])
         out.write("\t")
