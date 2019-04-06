@@ -11,14 +11,14 @@ go_terms = []
 term = []
 
 # Open the ontology text file and parse
-with open("go.obo", "r") as go:
+with open("./data/go.obo", "r") as go:
     for line in go:
         if line.startswith("[Term]"):
             if term:
                 go_terms.append(term)
             term = []
         if line.startswith("id: "):
-            term.append(line[3:].strip("\n"))
+            term.append(line[4:].strip("\n"))
         if line.startswith("name: "):
             term.append(line[6:].strip("\n"))
         if line.startswith("namespace: "):
