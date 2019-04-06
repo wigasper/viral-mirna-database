@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+
+# This script is used to extract data needed for my database
+# from previously downloaded UniProt XML files.
+
 import os
 from pathlib import Path
 
@@ -11,7 +16,7 @@ viruses = ["EBV", "KSHV"]
 uniprot_ids = []
 
 # Get IDs to extract info for:
-with open("vmt.tsv", "r") as handle:
+with open("./data/vmt.tsv", "r") as handle:
     for line in handle:
         line = line.split("\t")
         if line[1] in viruses: 
@@ -71,7 +76,7 @@ for ID in tqdm(uniprot_ids):
         errors.append(ID)
 
 # Save as tab delim
-with open("proteins.tab", "w") as out:
+with open("./data/proteins.tab", "w") as out:
     for prot in prot_data:
         out.write(prot[0])
         out.write("\t")
@@ -89,11 +94,11 @@ with open("proteins.tab", "w") as out:
 # Save as CSV
 prot_df = pd.DataFrame(prot_data, columns=['UniProtID', 'Symbol', 'FullName', 
                                            'GeneID', 'GOIDs', 'Tissues'])
-prot_df.to_csv("proteins.csv")
+prot_df.to_csv("./data/proteins.csv")
 
 # FNFEs belong to IDs that generated unresolvable errors on the pull
 # due to being obsolete. Recording for future reference
-with open("fnfes_from_uniprot_mining.csv", "w") as f:
+with open("./data/fnfes_from_uniprot_mining.csv", "w") as f:
     for e in fnfe:
         f.write(e)
         f.write("\n")
@@ -101,7 +106,25 @@ with open("fnfes_from_uniprot_mining.csv", "w") as f:
 # After examination, the IDs that raised AttributeErrors are
 # deprecated, deleted, or otherwise obsolete. Recording these for
 # future reference
-with open("obsolete_or_deleted_UniProtIDs.csv", "w") as f:
+with open("./data/obsolete_or_deleted_UniProtIDs.csv", "w") as f:
     for e in errors:
         f.write(e)
         f.write("\n")
+
+# Annotation data will be stored separately in the DB
+# Initialize list to store annotation data
+annotate_table_data = []
+
+# Extract annotation data
+for prot in prot_data:
+    for go_term in prot[4]:
+        entry = [prot[0], go_term]
+        annotate_table_data.append(entry)
+
+# Save as tab delim
+with open("./data/annotates.tab", "w") as out:
+    for annotation in annotate_table_data:
+        out.write(annotation[0])
+        out.write("\t")
+        out.write(annotation[1])
+        out.write("\n")
