@@ -10,4 +10,4 @@ cut -f 1,7  ./data/vmt.tsv | tail -n 7283 > ./data/viral_target_data.tsv
 
 # Remove GO terms from protein data, these will only be needed in the 
 # Annotates table
-cut -f 1,2,3,4,6 ./data/proteins.tab > ./data/proteins.tab
+cut -f 1,2,3,4,6 ./data/proteins_raw.tab > ./data/proteins.tab

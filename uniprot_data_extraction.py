@@ -76,7 +76,7 @@ for ID in tqdm(uniprot_ids):
         errors.append(ID)
 
 # Save as tab delim
-with open("./data/proteins.tab", "w") as out:
+with open("./data/proteins_raw.tab", "w") as out:
     for prot in prot_data:
         out.write(prot[0])
         out.write("\t")
