@@ -1,7 +1,5 @@
 import os
 
-import pandas as pd
-
 os.chdir("/media/wkg/storage/db-final-project")
 
 # A list to store GO terms
