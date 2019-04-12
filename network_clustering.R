@@ -13,15 +13,17 @@ graph <- simplify(graph)
 # Walktrap testing, here I am looking for the steps value that minimizes
 # the number of communities (to a certain extent)
 steps <- c(20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80)
-results <- data.frame()
-names(results) <- c("steps", "communities", "time")
+comm_size <- c()
+times <- c()
 for (step in steps)
 {
   start <- Sys.time()
   communities <- cluster_walktrap(graph, weights=NULL, steps=step)
-  results <- rbind(results, data.frame(steps=step, communities=length(communities), time=(Sys.time - start)))
+  comm_size <- c(comm_size, length(communities))
+  times <- c(times, (Sys.time() - start))
 }
 system("python3 /media/wkg/storage/bender/discordnotifier.py -m ppi_clustering_done")
+results <- data.frame(steps, comm_size, times)
 #start <- Sys.time()
 #communities <- cluster_fast_greedy(graph, weights=NULL)
 #maybe edit walktrap steps???
