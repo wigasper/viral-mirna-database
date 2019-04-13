@@ -1,44 +1,53 @@
-from app import db
+# coding: utf-8
+from sqlalchemy import Column, Integer, MetaData, String, Table
 
-class annotates(db.Model):
-    __table__ = 'annotates'
+metadata = MetaData()
 
-    uniprot_id = db.Column(db.String(10), primary_key=True)
-    go_id = db.Column(db.String(20), primary_key=True)
 
-class goterm(db.Model):
-    __table__ = 'goterm'
+t_annotates = Table(
+    'annotates', metadata,
+    Column('uniprot_id', String),
+    Column('go_id', String)
+)
 
-    go_id = db.Column(db.String(20), primary_key=True)
-    term = db.Column(db.String(80))
-    term_namespace = db.Column(String(80))
 
-class protein(db.Model):
-    __table__ = 'protein'
+t_goterm = Table(
+    'goterm', metadata,
+    Column('go_id', String),
+    Column('term', String),
+    Column('term_namespace', String)
+)
 
-    uniprot_id = db.Column(db.String(10), primary_key=True)
-    symbol = db.Column(db.String(12))
-    full_name = db.Column(db.String(30))
-    gene_id = db.Column(db.Integer)
-    tissue = db.Column(db.String(80))
 
-class protein_interaction(db.Model):
-    __table__ = 'protein_interaction'
+t_protein = Table(
+    'protein', metadata,
+    Column('uniprot_id', String),
+    Column('symbol', String),
+    Column('full_name', String),
+    Column('gene_id', Integer),
+    Column('tissue', String)
+)
 
-    interactor_a_gene_id = db.Column(db.Integer, primary_key=True)
-    interactor_b_gene_id = db.Column(db.Integer, primary_key=True)
-    interactor_a_symbol = db.Column(db.String(12))
-    interactor_b_symbol = db.Column(db.String(12))
 
-class viral_mirna(db.Model):
-    __table__ = 'viral_mirna'
+t_protein_interaction = Table(
+    'protein_interaction', metadata,
+    Column('interactor_a_gene_id', Integer),
+    Column('interactor_b_gene_id', Integer),
+    Column('interactor_a_symbol', String),
+    Column('interactor_b_symbol', String)
+)
 
-    vi_mirna_id = db.Column(db.String(15), primary_key=True)
-    virus = db.column(db.String(12))
-    mirna_symbol = db.column(db.String(20))
 
-class viral_target(db.Model):
-    __table__ = 'viral_target'
+t_viral_mirna = Table(
+    'viral_mirna', metadata,
+    Column('vi_mirna_id', String),
+    Column('virus', String),
+    Column('mirna_symbol', String)
+)
 
-    vi_mirna_id = db.Column(db.String(15), primary_key=True)
-    uniprot_id = db.Column(db.String(10))
+
+t_viral_target = Table(
+    'viral_target', metadata,
+    Column('vi_mirna_id', String),
+    Column('uniprot_id', String)
+)
