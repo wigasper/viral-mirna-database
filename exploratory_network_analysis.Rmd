@@ -40,7 +40,7 @@ temp_df <- data.frame(rownames(degrees), c(degrees$degrees))
 names(temp_df) <- c("Gene", "Degree")
 temp_df <- temp_df[order(-temp_df$Degree),]
 #degrees <- degrees[order(-degrees$degrees),]
-knitr::kable(head(temp_df, n=10), row.names=TRUE)
+knitr::kable(head(temp_df, n=10), row.names=FALSE)
 ```
 
 Next, community membership is decided using the infomap algorithm:

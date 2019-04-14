@@ -9,6 +9,8 @@ graph <- graph_from_edgelist(edge_list, directed=FALSE)
 
 graph <- simplify(graph)
 
+degrees <- degree(graph)
+
 #plot(graph)
 
 # Walktrap testing, here I am looking for the steps value that minimizes
