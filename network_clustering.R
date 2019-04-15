@@ -59,8 +59,12 @@ colors <- palette(terrain.colors(length(communities), alpha=.6))
 # not bad: 
 #plot(graph, vertex.color=colors[V(graph)$community], vertex.label=NA, layout=layout_with_drl)
 
-pdf(file="/home/wkg/Desktop/test_lgl_infomap.pdf")
-plot(graph, vertex.color=colors[V(graph)$community], vertex.label=NA, layout=layout_with_lgl)
+pdf(file="/home/wkg/Desktop/test_drl_infomap.pdf")
+#coords <- layout_nicely(graph, dim=3)
+# run drl with 2 dimensions
+#coords <- layout_with_drl(graph, dim=3)
+coords <- layout_randomly(graph, dim=2)
+plot(graph, vertex.color=colors[V(graph)$community], vertex.label=NA, layout=coords)
 system("python3 /media/wkg/storage/bender/discordnotifier.py -m graph_dizzone")
 dev.off()
 
