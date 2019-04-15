@@ -1,7 +1,9 @@
 library(igraph)
-library(RColorBrewer)
+#library(RColorBrewer)
 
-edge_list <- read.csv("ebv_target_interactions.csv", header=FALSE)
+setwd("/media/wkg/storage/db-final-project")
+
+edge_list <- read.csv("./data/ebv_target_interactions.csv", header=FALSE)
 
 edge_list <- as.matrix(edge_list)
 
@@ -9,7 +11,7 @@ graph <- graph_from_edgelist(edge_list, directed=FALSE)
 
 graph <- simplify(graph)
 
-degrees <- degree(graph)
+#degrees <- degree(graph)
 
 #plot(graph)
 
@@ -52,8 +54,15 @@ V(graph)$community <- communities$membership
 #color_pal <- colorRampPalette(brewer.pal(11, "Spectral"))
 #colors <- palette(color_pal(length(communities), alpha=.6))
 colors <- palette(terrain.colors(length(communities), alpha=.6))
+colors <- palette(terrain.colors(length(communities), alpha=.6))
 #colors <- palette(hcl.colors(n=length(communities), palette="Spectral", alpha=.6))
-plot(graph, vertex.color=colors[V(graph)$community], vertex.label=NA)
+# not bad: 
+#plot(graph, vertex.color=colors[V(graph)$community], vertex.label=NA, layout=layout_with_drl)
+
+pdf(file="/home/wkg/Desktop/test_lgl_infomap.pdf")
+plot(graph, vertex.color=colors[V(graph)$community], vertex.label=NA, layout=layout_with_lgl)
+system("python3 /media/wkg/storage/bender/discordnotifier.py -m graph_dizzone")
+dev.off()
 
 # get membership values for nodes
-membership <- cbind(V(graph)$name, communities$membership)
+#membership <- cbind(V(graph)$name, communities$membership)
