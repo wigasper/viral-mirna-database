@@ -1,5 +1,5 @@
 ---
-title: "Protein-Protein Interaction Network Community Detection"
+title: "EBV and KSHV Target Gene Network Analysis"
 output: github_document
 ---
 
@@ -23,7 +23,7 @@ rm ./data/ebv_target_interactions_a.csv
 rm ./data/ebv_target_interactions_b.csv
 ```
 
-Community detection, plotting, and other graph functions were all done using the igraph package.
+Community detection, plotting, and other graph functions were all done using the igraph package. igraph is available for both R and Python
 
 ```{r include=FALSE}
 library(igraph)
@@ -44,17 +44,17 @@ First, let's look at a density plot of node degrees:
 
 ```{r}
 # get node degrees
-degrees <- degree(graph)
-degrees <- as.data.frame(degrees)
-ggplot(degrees, aes(degrees)) + geom_density(color="firebrick3", fill="firebrick3", alpha=0.4) + coord_cartesian(xlim=c(0,150))
+degree <- degree(graph)
+degree <- as.data.frame(degree)
+ggplot(degree, aes(degree)) + geom_density(color="firebrick3", fill="firebrick3", alpha=0.4) + coord_cartesian(xlim=c(0,150))
 ```
 
 Not suprisingly, the degree distribution is highly skewed, characteristic of a scale-free network. This may also be somewhat due to scientific focus on studying certain genes. For example, the top few genes with the most interaction partners are:
 
 ```{r}
-temp_df <- data.frame(rownames(degrees), c(degrees$degrees))
-names(temp_df) <- c("Gene", "Degree")
-temp_df <- temp_df[order(-temp_df$Degree),]
+temp_df <- data.frame(rownames(degree), c(degree$degree))
+names(temp_df) <- c("gene", "degree")
+temp_df <- temp_df[order(-temp_df$degree),]
 #degrees <- degrees[order(-degrees$degrees),]
 knitr::kable(head(temp_df, n=10), row.names=FALSE)
 ```
@@ -66,13 +66,38 @@ communities <- cluster_infomap(graph, nb.trials=10)
 length(communities)
 ```
 
-
-
 ```{r}
 V(graph)$community <- communities$membership
 colors <- palette(terrain.colors(length(communities), alpha=.6))
 plot(graph, vertex.color=colors[V(graph)$community], vertex.label=NA)
 ```
  
+igraph also has a function for getting estimating the betweenness centrality of nodes and edges. Betweenness centrality describes the number of shortest paths that exist through a node, so these nodes may be more likely to be influential.
  
+```{r}
+#btwn_cent <- estimate_betweenness(graph, directed=FALSE, weight=NULL, cutoff=-1)
+btwn_cent <- betweenness(graph, directed=FALSE, weight=NULL)
+btwn_cent <- as.data.frame(btwn_cent)
+ggplot(btwn_cent, aes(btwn_cent)) + geom_density(color="royalblue3", fill="royalblue3", alpha=0.4) + coord_cartesian(xlim=c(0,200000))
+```
+
+Let's look at the ten largest nodes by betweenness centrality:
+
+```{r}
+temp_df_2 <- data.frame(rownames(btwn_cent), c(btwn_cent$btwn_cent))
+names(temp_df_2) <- c("gene", "betweenness")
+net_stats <- merge(temp_df_2, temp_df, by="gene")
+net_stats <- net_stats[order(-net_stats$betweenness),]
+knitr::kable(head(net_stats, n=10), row.names=FALSE)
+```
+ 
+Not surprisingly, many of the high degree nodes also have high betweenness centralities, however there are a few that were not in the top ten for degree: KRAS, TRIM25, and ESR2. Likewise, RNF2, CDK2, and CHD4 had high degrees but are not in the top ten for betweenness centrality. 
+
+We can subset the data frame to quickly see the betweenness values for RNF2, CDK2, and CHD4:
+
+```{r}
+subset <- net_stats[which(net_stats$gene %in% c("RNF2", "CDK2", "CHD4")),]
+subset <- subset[order(-subset$degree),]
+knitr::kable(head(subset), row.names=FALSE)
+```
 
