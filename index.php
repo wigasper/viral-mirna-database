@@ -1,9 +1,9 @@
 <!-- /var/www/html -->
 <html>
 <head>
-<title>Viral miRNA Database</title>
-<h1><center>Viral miRNA Database</center></h1>
-<p><center>Welcome to the simplified user interface for the viral miRNA database.</p>
+<title>Viral miRNA Target Database</title>
+<h1><center>Viral miRNA Target Database</center></h1>
+<p><center>Welcome to the simplified user interface for the viral miRNA target database.</p>
 </head>
 <body>
 <form name="display" action="index.php" method="POST" >
@@ -42,7 +42,7 @@ echo '<center>Search results:</center><br><br>';
 //    echo "Gene Tissue Specificity: {$row['tissue']}<br><br>";
 //}
 
-echo "<center><table border='1'><col width='60'><col width='250'><col width='600'>";
+echo "<center><table border='1'><col width='110'><col width='250'><col width='600'>";
 echo "<tr><td>Gene Symbol</td><td>Full Name</td><td>Tissue Specificity</td>";
 while ($row = pg_fetch_array($result)){
     $symbol = $row['symbol'];
