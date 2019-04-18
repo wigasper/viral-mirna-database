@@ -149,6 +149,7 @@ sorted_counts = counts_subset[with(counts_subset, order(-freq)),]
 knitr::kable(head(sorted_counts, n=10), row.names=FALSE)
 ```
 
+This is my first experience examining protein-protein interaction networks, so I am not entirely sure what the best way is to evaluate the performance of the community detection algorithm. As a start though, I am going to look 
 igraph also has a function for getting estimating the betweenness centrality of nodes and edges. Betweenness centrality describes the number of shortest paths that exist through a node, so these nodes may be more likely to be influential.
  
 ```{r}
