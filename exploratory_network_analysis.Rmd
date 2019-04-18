@@ -47,6 +47,7 @@ Community detection, plotting, and other graph functions were all done using the
 library(igraph)
 library(ggplot2)
 library(plyr)
+library(topGO)
 
 # read in
 edge_list <- read.csv("./data/ebv_target_interactions.csv", header=FALSE)
@@ -149,7 +150,23 @@ sorted_counts = counts_subset[with(counts_subset, order(-freq)),]
 knitr::kable(head(sorted_counts, n=10), row.names=FALSE)
 ```
 
-This is my first experience examining protein-protein interaction networks, so I am not entirely sure what the best way is to evaluate the performance of the community detection algorithm. As a start though, I am going to look 
+This is my first experience examining protein-protein interaction networks, so I am not entirely sure what the best way is to evaluate the performance of the community detection algorithm. As a start though, I am going to look at Gene Ontology enrichment to see if certain annotations are highly overrepresented in a few communities.
+```{r}
+#community_5_symbols <- ebv_targets[which(ebv_targets$community==5),]
+#community_5_symbols <- as.vector(community_5_symbols$symbol)
+#write.csv(community_5_symbols,"community_5_symbols.csv", quote=FALSE,row.names=FALSE)
+#community_5 <- vector(length=length(community_5_symbols))
+#community_5 <- factor(as.integer(ebv_targets$symbol %in% community_5_symbols))
+#names(community_5) <- community_5_symbols
+#go_data <- new("topGOdata", ontology="BP", allGenes=community_5, annot=annFUN.org, ID="alias", mapping="org.Hs.eg")
+#go_data
+#fisher <- runTest(go_data, algorithm="classic", statistic="fisher")
+#fisher
+#kol_smir <- runTest(go_data, algorithm="classic", statistic="ks")
+#kol_smir_elim <- runTest(go_data, algorithm="elim", statistic="ks")
+#results <- as.data.frame(GenTable(go_data, classicFisher=fisher, classicKS=kol_smir, elimKS=kol_smir_elim, orderBy="elimKS", ranksOf="classicFisher", topNodes=200))
+```
+
 igraph also has a function for getting estimating the betweenness centrality of nodes and edges. Betweenness centrality describes the number of shortest paths that exist through a node, so these nodes may be more likely to be influential.
  
 ```{r}
