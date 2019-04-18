@@ -10,9 +10,27 @@ Protein-protein interaction data was initially obtained by downloading BioGRID. 
 These are the queries I used to get all interactions where a target gene was an interactor:
 
 ```{sql eval=FALSE}
-\copy (SELECT DISTINCT protein.symbol, protein_interaction.interactor_b_symbol FROM protein, protein_interaction, viral_target, viral_mirna WHERE viral_mirna.virus = 'EBV' AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id AND viral_target.uniprot_id = protein.uniprot_id AND protein.symbol = protein_interaction.interactor_a_symbol AND protein.symbol != protein_interaction.interactor_b_symbol ORDER BY protein.symbol ASC) to '/media/wkg/storage/db-final-project/data/ebv_target_interactions_a.csv' with csv
+CREATE TEMP VIEW temp_view AS
+SELECT DISTINCT protein.symbol, protein_interaction.interactor_b_symbol 
+FROM protein, protein_interaction, viral_target, viral_mirna 
+WHERE viral_mirna.virus = 'EBV' AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id 
+AND viral_target.uniprot_id = protein.uniprot_id 
+AND protein.symbol = protein_interaction.interactor_a_symbol 
+AND protein.symbol != protein_interaction.interactor_b_symbol ORDER BY protein.symbol ASC;
 
-\copy (SELECT DISTINCT protein.symbol, protein_interaction.interactor_a_symbol FROM protein, protein_interaction, viral_target, viral_mirna WHERE viral_mirna.virus = 'EBV' AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id AND viral_target.uniprot_id = protein.uniprot_id AND protein.symbol = protein_interaction.interactor_b_symbol AND protein.symbol != protein_interaction.interactor_a_symbol ORDER BY protein.symbol ASC) to '/media/wkg/storage/db-final-project/data/ebv_target_interactions_b.csv' with csv
+\copy (SELECT * FROM temp_view) to '/media/wkg/storage/db-final-project/data/ebv_target_interactions_a.csv' with csv
+DROP VIEW temp_view;
+
+CREATE TEMP VIEW temp_view AS
+SELECT DISTINCT protein.symbol, protein_interaction.interactor_a_symbol 
+FROM protein, protein_interaction, viral_target, viral_mirna 
+WHERE viral_mirna.virus = 'EBV' AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id 
+AND viral_target.uniprot_id = protein.uniprot_id 
+AND protein.symbol = protein_interaction.interactor_b_symbol 
+AND protein.symbol != protein_interaction.interactor_a_symbol ORDER BY protein.symbol ASC;
+
+\copy (SELECT * FROM temp_view) to '/media/wkg/storage/db-final-project/data/ebv_target_interactions_b.csv' with csv
+DROP VIEW temp_view;
 ```
 
 I then used a bash script to combine the two files:
@@ -28,6 +46,7 @@ Community detection, plotting, and other graph functions were all done using the
 ```{r include=FALSE}
 library(igraph)
 library(ggplot2)
+library(plyr)
 
 # read in
 edge_list <- read.csv("./data/ebv_target_interactions.csv", header=FALSE)
@@ -55,30 +74,88 @@ Not suprisingly, the degree distribution is highly skewed, characteristic of a s
 temp_df <- data.frame(rownames(degree), c(degree$degree))
 names(temp_df) <- c("gene", "degree")
 temp_df <- temp_df[order(-temp_df$degree),]
-#degrees <- degrees[order(-degrees$degrees),]
 knitr::kable(head(temp_df, n=10), row.names=FALSE)
 ```
 
 Next, community membership is decided using the infomap algorithm:
 
 ```{r}
+set.seed(42)
 communities <- cluster_infomap(graph, nb.trials=10)
+membership <- cbind(V(graph)$name, communities$membership)
+membership <- as.data.frame(membership)
+names(membership) <- c("symbol", "community")
+
+# Write membership to output
+write.csv(membership, "./data/protein_community_membership.csv", row.names=FALSE, quote=FALSE)
+
+# Check number of communities
 length(communities)
+```
+```{r include=FALSE}
+colors <- palette(terrain.colors(length(communities), alpha=.6))
+colors <- palette(terrain.colors(length(communities), alpha=.6))
 ```
 
 ```{r}
 V(graph)$community <- communities$membership
-colors <- palette(terrain.colors(length(communities), alpha=.6))
 plot(graph, vertex.color=colors[V(graph)$community], vertex.label=NA)
 ```
  
+ Let's look at the distribution of proteins across communities:
+ 
+```{r}
+counts = as.data.frame(count(membership, "community"))
+ggplot(counts, aes(freq)) + geom_density(color="navy", fill="navy", alpha =0.4) + coord_cartesian(xlim=c(0,125))
+```
+
+This doesn't seem like a terrible distribution, as we can see in the table below we definitely have some larger, outlier communities, but most of the communities are smaller.
+
+```{r}
+sorted_counts = counts[with(counts, order(-freq)),]
+knitr::kable(head(sorted_counts, n=10), row.names=FALSE)
+```
+
+I am primarily interested in the community identities of EBV targets, so I will subset my data frame to only include these proteins. First, I query Postgre to get the data:
+
+```{sql eval=FALSE}
+CREATE TEMP VIEW temp_view AS
+SELECT DISTINCT protein.symbol 
+FROM protein, viral_target, viral_mirna 
+WHERE viral_mirna.virus = 'EBV' AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id 
+AND viral_target.uniprot_id = protein.uniprot_id ORDER BY protein.symbol ASC;
+
+\copy (SELECT * FROM temp_view) to '/media/wkg/storage/db-final-project/data/ebv_target_symbols.csv' with csv
+DROP VIEW temp_view;
+```
+
+
+```{r}
+ebv_targets <- read.csv("./data/ebv_target_symbols.csv", header=FALSE)
+names(ebv_targets) <- "symbol"
+ebv_targets <- merge(ebv_targets, membership, by="symbol")
+
+# Merge membership df to ebv_targets by symbol
+```
+
+Now let's look at the distribution of community sizes and a top ten table just for EBV targets:
+
+```{r}
+counts_subset = as.data.frame(count(ebv_targets, "community"))
+ggplot(counts_subset, aes(freq)) + geom_density(color="orangered2", fill="orangered2", alpha =0.4) + coord_cartesian(xlim=c(0,25))
+```
+```{r}
+sorted_counts = counts_subset[with(counts_subset, order(-freq)),]
+knitr::kable(head(sorted_counts, n=10), row.names=FALSE)
+```
+
 igraph also has a function for getting estimating the betweenness centrality of nodes and edges. Betweenness centrality describes the number of shortest paths that exist through a node, so these nodes may be more likely to be influential.
  
 ```{r}
 #btwn_cent <- estimate_betweenness(graph, directed=FALSE, weight=NULL, cutoff=-1)
 btwn_cent <- betweenness(graph, directed=FALSE, weight=NULL)
 btwn_cent <- as.data.frame(btwn_cent)
-ggplot(btwn_cent, aes(btwn_cent)) + geom_density(color="royalblue3", fill="royalblue3", alpha=0.4) + coord_cartesian(xlim=c(0,200000))
+ggplot(btwn_cent, aes(btwn_cent)) + geom_density(color="springgreen3", fill="springgreen3", alpha=0.4) + coord_cartesian(xlim=c(0,200000))
 ```
 
 Let's look at the ten largest nodes by betweenness centrality:
