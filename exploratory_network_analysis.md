@@ -1,16 +1,16 @@
-EBV and KSHV Target Gene Network Analysis
+EBV Target Gene Network Analysis
 ================
 
 As part of a simple exploratory analysis for this project, I am
-interested in identifying communities of EBV and KSHV gene targets based
-on their interaction partners. I am hoping that the community
+interested in identifying communities of Epstein-Barr virus gene targets
+based on their interaction partners. I am hoping that the community
 characteristics will yield insights, particularly with the added context
 of Gene Ontology annotations.
 
 Protein-protein interaction data was initially obtained by downloading
 BioGRID. After insertion into my database, an edge list was generated
-using two queries (per virus) to isolate interactions only involving
-known targets of EBV and KSHV.
+using two queries to isolate interactions only involving known targets
+of EBV.
 
 These are the queries I used to get all interactions where a target gene
 was an interactor:
@@ -197,14 +197,20 @@ knitr::kable(head(sorted_counts, n=10), row.names=FALSE)
 This is my first experience examining protein-protein interaction
 networks, so I am not entirely sure what the best way is to evaluate the
 performance of the community detection algorithm. As a start though, I
-am going to look igraph also has a function for getting estimating the
-betweenness centrality of nodes and edges. Betweenness centrality
-describes the number of shortest paths that exist through a node, so
-these nodes may be more likely to be
-influential.
+am going to use Gene Ontology enrichment analysis to see if certain
+annotations are significantly overrepresented in the communities. I
+chose to do this work in a separate Jupyter notebook, which can be
+viewed
+at:
+
+<https://github.com/wigasper/viral-mirna-database/blob/master/community_enrichment_analysis>
+
+igraph also has a function for getting estimating the betweenness
+centrality of nodes and edges. Betweenness centrality describes the
+number of shortest paths that exist through a node, so these nodes may
+be more likely to be influential.
 
 ``` r
-#btwn_cent <- estimate_betweenness(graph, directed=FALSE, weight=NULL, cutoff=-1)
 btwn_cent <- betweenness(graph, directed=FALSE, weight=NULL)
 btwn_cent <- as.data.frame(btwn_cent)
 ggplot(btwn_cent, aes(btwn_cent)) + geom_density(color="springgreen3", fill="springgreen3", alpha=0.4) + coord_cartesian(xlim=c(0,200000))
@@ -256,3 +262,152 @@ knitr::kable(head(subset), row.names=FALSE)
 | RNF2 |     1972777 |    736 |
 | CDK2 |     1622640 |    690 |
 | CHD4 |     1165910 |    644 |
+
+I am also very interested in how EBV target proteins interact directly
+with each other.
+
+Similarly to my initial process, I will use the following queries and
+then a bash script in order to get the target-target interaction data.
+
+``` sql
+CREATE TEMP VIEW temp_view AS
+SELECT DISTINCT protein.symbol, protein_interaction.interactor_b_symbol 
+FROM protein, protein_interaction, viral_target, viral_mirna 
+WHERE viral_mirna.virus = 'EBV' AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id 
+AND viral_target.uniprot_id = protein.uniprot_id 
+AND protein.symbol = protein_interaction.interactor_a_symbol 
+AND protein.symbol != protein_interaction.interactor_b_symbol 
+AND protein_interaction.interactor_b_symbol IN 
+(SELECT protein.symbol FROM protein, viral_target, viral_mirna 
+WHERE viral_mirna.virus = 'EBV' 
+AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id 
+AND viral_target.uniprot_id = protein.uniprot_id) 
+ORDER BY protein.symbol ASC;
+
+\copy (SELECT * FROM temp_view) to '/media/wkg/storage/db-final-project/data/ebv_target-target_ints_a.csv' with csv
+DROP VIEW temp_view;
+
+CREATE TEMP VIEW temp_view AS
+SELECT DISTINCT protein.symbol, protein_interaction.interactor_a_symbol 
+FROM protein, protein_interaction, viral_target, viral_mirna 
+WHERE viral_mirna.virus = 'EBV' AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id 
+AND viral_target.uniprot_id = protein.uniprot_id 
+AND protein.symbol = protein_interaction.interactor_b_symbol 
+AND protein.symbol != protein_interaction.interactor_a_symbol 
+AND protein_interaction.interactor_a_symbol IN 
+(SELECT protein.symbol FROM protein, viral_target, viral_mirna 
+WHERE viral_mirna.virus = 'EBV' 
+AND viral_mirna.vi_mirna_id = viral_target.vi_mirna_id 
+AND viral_target.uniprot_id = protein.uniprot_id) 
+ORDER BY protein.symbol ASC;
+
+\copy (SELECT * FROM temp_view) to '/media/wkg/storage/db-final-project/data/ebv_target-target_ints_b.csv' with csv
+DROP VIEW temp_view;
+```
+
+``` bash
+cat ./data/ebv_target-target_ints_a.csv ./data/ebv_target-target_ints_b.csv > ./data/ebv_target-target_ints.csv
+rm ./data/ebv_target-target_ints_a.csv
+rm ./data/ebv_target-target_ints_b.csv
+```
+
+Now, to repeat lots of the code used above:
+
+Let’s look at a density plot of node degrees:
+
+``` r
+# get node degrees
+degree <- degree(graph)
+degree <- as.data.frame(degree)
+ggplot(degree, aes(degree)) + geom_density(color="firebrick3", fill="firebrick3", alpha=0.4) + coord_cartesian(xlim=c(0,150))
+```
+
+![](exploratory_network_analysis_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+Similarly to the broader network, the distribution is similar to common
+distributions of scale-free networks.
+
+``` r
+temp_df <- data.frame(rownames(degree), c(degree$degree))
+names(temp_df) <- c("gene", "degree")
+temp_df <- temp_df[order(-temp_df$degree),]
+knitr::kable(head(temp_df, n=10), row.names=FALSE)
+```
+
+| gene   | degree |
+| :----- | -----: |
+| ELAVL1 |    655 |
+| XPO1   |    352 |
+| BRCA1  |    268 |
+| MCM2   |    215 |
+| TNIP2  |    214 |
+| RNF2   |    188 |
+| MYC    |    186 |
+| CDK2   |    173 |
+| HDAC1  |    169 |
+| CDH1   |    165 |
+
+The top ten here is almost identical to the top ten of the broader
+network, with some exceptions.
+
+We should also check the betweenness centrality values of the
+target-target network.
+
+``` r
+btwn_cent <- betweenness(graph, directed=FALSE, weight=NULL)
+btwn_cent <- as.data.frame(btwn_cent)
+ggplot(btwn_cent, aes(btwn_cent)) + geom_density(color="coral2", fill="coral2", alpha=0.4) + coord_cartesian(xlim=c(0,25000))
+```
+
+![](exploratory_network_analysis_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+``` r
+temp_df_2 <- data.frame(rownames(btwn_cent), c(btwn_cent$btwn_cent))
+names(temp_df_2) <- c("gene", "betweenness")
+net_stats <- merge(temp_df_2, temp_df, by="gene")
+net_stats <- net_stats[order(-net_stats$betweenness),]
+knitr::kable(head(net_stats, n=10), row.names=FALSE)
+```
+
+| gene   | betweenness | degree |
+| :----- | ----------: | -----: |
+| ELAVL1 |   823559.46 |    655 |
+| XPO1   |   235403.10 |    352 |
+| TNIP2  |   106168.08 |    214 |
+| BRCA1  |   105222.43 |    268 |
+| CDH1   |    78850.25 |    165 |
+| MCM2   |    77717.04 |    215 |
+| MYC    |    69953.22 |    186 |
+| RNF2   |    69671.93 |    188 |
+| EWSR1  |    65006.86 |    160 |
+| HDAC1  |    57538.27 |    169 |
+
+Again, there are many similarities to the top nodes for betweeness of
+the broader network.
+
+Next, community membership is decided using the infomap algorithm:
+
+``` r
+set.seed(42)
+communities <- cluster_infomap(graph, nb.trials=10)
+membership <- cbind(V(graph)$name, communities$membership)
+membership <- as.data.frame(membership)
+names(membership) <- c("symbol", "community")
+
+# Write membership to output
+write.csv(membership, "./data/protein_targ-targ_comm_membership.csv", row.names=FALSE, quote=FALSE)
+
+# Check number of communities
+length(communities)
+```
+
+    ## [1] 111
+
+``` r
+V(graph)$community <- communities$membership
+layout <- layout_with_graphopt(graph)
+layout <- norm_coords(layout, ymin=-1, ymax=1, xmin=-1, xmax=1)
+plot(graph, rescale=F, vertex.color=colors[V(graph)$community], vertex.label=NA, layout=layout)
+```
+
+![](exploratory_network_analysis_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
