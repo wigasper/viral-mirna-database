@@ -127,10 +127,11 @@ most of the communities are smaller.
 
 ``` r
 sorted_counts = counts[with(counts, order(-freq)),]
+names(sorted_counts) <- c("community", "size")
 knitr::kable(head(sorted_counts, n=10), row.names=FALSE)
 ```
 
-| community | freq |
+| community | size |
 | :-------- | ---: |
 | 1         | 3367 |
 | 2         |  331 |
@@ -178,10 +179,11 @@ ggplot(counts_subset, aes(freq)) + geom_density(color="orangered2", fill="orange
 
 ``` r
 sorted_counts = counts_subset[with(counts_subset, order(-freq)),]
+names(sorted_counts) <- c("community", "size")
 knitr::kable(head(sorted_counts, n=10), row.names=FALSE)
 ```
 
-| community | freq |
+| community | size |
 | :-------- | ---: |
 | 1         |  639 |
 | 4         |   88 |
