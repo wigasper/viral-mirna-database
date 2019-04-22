@@ -12,6 +12,7 @@ Please enter a gene symbol to get started:<br><input type="text" name="prot_symb
 </form></center>
 <?php
 
+// Connect
 $conn = pg_connect("host=localhost port=5432 dbname=vir_mirna user=wkg password=apples");
 
 /*******Connection Status Check********/
@@ -21,27 +22,23 @@ if (!$conn) {
 echo  '<center>Connected successfully</center><br><br>';
 /***********************************/
 
+// Get symbol
 $symbol = $_POST[prot_symbol];
 
+
+// Query
 $query = "SELECT DISTINCT protein.symbol, protein.full_name, protein.tissue 
           FROM protein 
           WHERE protein.symbol = '".$symbol."'";
 
+// Result
 $result = pg_query($query);
 
+// Display results if they exist
 if (strlen($symbol) > 0) {
 echo '<center>Search results:</center><br><br>';
 
-
-//while ($row = pg_fetch_array($result))
-//{
-//    echo "Gene Symbol: {$row['symbol']}<br>";
-//    echo "Gene Full Name: {$row['full_name']}<br>";
-//    echo "Virus: {$row['virus']}<br>";
-//    echo "Viral miRNA ID: {$row['vi_mirna_id']}<br>";
-//    echo "Gene Tissue Specificity: {$row['tissue']}<br><br>";
-//}
-
+// Display basic gene data
 echo "<center><table border='1'><col width='110'><col width='250'><col width='600'>";
 echo "<tr><td>Gene Symbol</td><td>Full Name</td><td>Tissue Specificity</td>";
 while ($row = pg_fetch_array($result)){
@@ -52,6 +49,7 @@ while ($row = pg_fetch_array($result)){
 }
 echo "</table></center>";
 
+// Query for viral miRNA data
 $query = "SELECT DISTINCT viral_mirna.virus 
           FROM viral_target, protein, viral_mirna 
           WHERE protein.symbol = '".$symbol."' 
@@ -60,6 +58,7 @@ $query = "SELECT DISTINCT viral_mirna.virus
 
 $result = pg_query($query);
 
+// Display viral mirna data
 echo "<br><br><center><b>".$symbol." is targeted by the following viruses:</b><br><br><table border='1'>";
 while ($row = pg_fetch_array($result)){
     $virus = $row['virus'];
@@ -82,6 +81,7 @@ while ($row = pg_fetch_array($result)){
 }
 echo "</table></center>";
 
+// Query for GO terms
 $query = "SELECT DISTINCT goterm.term 
           FROM protein, annotates, goterm 
           WHERE protein.symbol = '".$symbol."' 
@@ -90,6 +90,7 @@ $query = "SELECT DISTINCT goterm.term
 
 $result = pg_query($query);
 
+// Display GO terms
 echo "<br><br><center><b>".$symbol." has been annotated with the following Gene Ontology 
         terms:<br><br></b><table border='1'>";
 while ($row = pg_fetch_array($result)){
