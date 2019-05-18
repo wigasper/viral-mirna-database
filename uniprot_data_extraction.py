@@ -3,14 +3,9 @@
 # This script is used to extract data needed for my database
 # from previously downloaded UniProt XML files.
 
-import os
-from pathlib import Path
-
 import pandas as pd
 from tqdm import tqdm
 from bs4 import BeautifulSoup
-
-os.chdir("/media/wkg/storage/db-final-project")
 
 viruses = ["EBV", "KSHV"]
 uniprot_ids = []

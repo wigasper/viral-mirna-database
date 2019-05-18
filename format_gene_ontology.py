@@ -1,6 +1,4 @@
-import os
-
-os.chdir("/media/wkg/storage/db-final-project")
+#!/usr/bin/env python3
 
 # A list to store GO terms
 go_terms = []

@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-import os
 import requests
 import time
 from pathlib import Path
 
 from tqdm import tqdm
-
-os.chdir("/Users/wigasper/Documents/Classes/BIOI 4870/db-final-project")
-# os.chdir ("/media/wkg/storage/db-final-project")
 
 # Viruses that I am concerned with for this database
 viruses = ["EBV", "KSHV"]
