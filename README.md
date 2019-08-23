@@ -41,8 +41,8 @@ $ psql -h localhost -U postgres -d postgres
 ```
 Create the database and import data
 ```sql
-# CREATE DATABASE vir_mirna;
-# \i initialize_db.sql
+CREATE DATABASE vir_mirna;
+\i initialize_db.sql
 ```
 Done! You now have a fully functional viral miRNA database
 
