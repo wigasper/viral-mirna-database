@@ -7,11 +7,11 @@ Final project for my BIOI 4870 (Database Search & Pattern Discovery) class. Data
 Want to replicate this database? Install and configure PostgreSQL, generate go.tab and protein_interaction_data.tsv as describe above, or make it easy on yourself and run Postgre in Docker:
 
 ## Database Setup
-Install [Docker](https://www.docker.com/), then pull an image for Postgre
+Install [Docker](https://www.docker.com/), then pull an image for Postgres
 ```bash
 $ docker pull postgres
 ```
-Create a directory for the data created by the Postgre instance
+Create a directory for the data created by the Postgres instance
 ```bash
 $ mkdir -p $HOME/docker/volumes/postgres
 ```
@@ -44,7 +44,11 @@ Create the database and import data
 CREATE DATABASE vir_mirna;
 \i initialize_db.sql
 ```
-Done! You now have a fully functional viral miRNA database
+Done! You now have a fully functional viral miRNA database. 
+Want to shut it down?
+```bash
+$ docker stop pg-docker
+```
 
 ## File Descriptions
 ### Data Aggregation/Preprocessing
