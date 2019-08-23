@@ -1,6 +1,5 @@
 # viral-mirna-final-project
 Final project for my BIOI 4870 (Database Search & Pattern Discovery) class. 
-![Alt text](er_diagram.png?raw=true)
 
 Data for the database, within Github size constraints, have been added in the /data directory. The only missing files required for this database are:
 
@@ -69,3 +68,6 @@ $ docker stop pg-docker
 
 ### User Interface
 * **index.php** - A simple web interface for the database
+
+## E.R. Diagram
+![Alt text](er_diagram.png?raw=true)
