@@ -1,4 +1,4 @@
-# viral-mirna-final-project
+# viral-mirna-database
 Final project for my BIOI 4870 (Database Search & Pattern Discovery) class. 
 
 Data for the database, within Github size constraints, have been added in the /data directory. The only missing files required for this database are:
